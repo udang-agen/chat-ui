@@ -18,6 +18,7 @@
 
 	import { isVirtualKeyboard } from "$lib/utils/isVirtualKeyboard";
 	import { requireAuthUser } from "$lib/utils/auth";
+	import { isOnline } from "$lib/stores/isOnline.svelte";
 	import {
 		enabledServersCount,
 		selectedServerIds,
@@ -230,6 +231,9 @@
 	let selectedServers = $derived(
 		$allMcpServers.filter((server) => $selectedServerIds.has(server.id))
 	);
+	// Effective disabled state that includes offline status
+	let isOffline = $derived(!$isOnline);
+	let effectiveDisabled = $derived(disabled || isOffline);
 </script>
 
 <div class="flex min-h-full flex-1 flex-col" onpaste={onPaste}>
@@ -238,17 +242,18 @@
 		tabindex="0"
 		inputmode="text"
 		class="scrollbar-custom max-h-[4lh] w-full resize-none overflow-x-hidden overflow-y-auto border-0 bg-transparent px-2.5 py-2.5 outline-hidden focus:ring-0 focus-visible:ring-0 sm:px-3 md:max-h-[8lh]"
-		class:text-gray-400={disabled}
+		class:text-gray-400={effectiveDisabled}
 		bind:value
 		bind:this={textareaElement}
 		onkeydown={handleKeydown}
 		oncompositionstart={() => (isCompositionOn = true)}
 		oncompositionend={() => (isCompositionOn = false)}
 		{placeholder}
-		{disabled}
+		disabled={effectiveDisabled}
 		onfocus={handleFocus}
 		onblur={handleBlur}
 		onbeforeinput={requireAuthUser}
+		title={isOffline ? "You are offline" : undefined}
 	></textarea>
 
 	{#if !showNoTools}
@@ -261,7 +266,7 @@
 				<div class="flex items-center">
 					<input
 						bind:this={fileInputEl}
-						disabled={loading}
+						disabled={loading || isOffline}
 						class="absolute hidden size-0"
 						aria-label="Upload file"
 						type="file"
@@ -278,7 +283,7 @@
 					<DropdownMenu.Root
 						bind:open={isDropdownOpen}
 						onOpenChange={(open) => {
-							if (open && requireAuthUser()) {
+							if (open && (requireAuthUser() || isOffline)) {
 								isDropdownOpen = false;
 								return;
 							}
@@ -287,8 +292,9 @@
 					>
 						<DropdownMenu.Trigger
 							class="btn size-8 rounded-full border bg-white text-black shadow-sm transition-none enabled:hover:bg-white enabled:hover:shadow-inner sm:size-7 dark:border-transparent dark:bg-gray-600/50 dark:text-white dark:hover:enabled:bg-gray-600"
-							disabled={loading}
+							disabled={loading || isOffline}
 							aria-label="Add attachment"
+							title={isOffline ? "You are offline" : "Add attachment"}
 						>
 							<IconPlus class="text-base sm:text-sm" />
 						</DropdownMenu.Trigger>
@@ -481,7 +487,7 @@
 
 <style>
 	/* In the base layer so utility classes (font-mono, text-xs, prose) keep
-	   winning over these element selectors, as they did before Tailwind v4 */
+       winning over these element selectors, as they did before Tailwind v4 */
 	@layer base {
 		:global(pre),
 		:global(textarea) {

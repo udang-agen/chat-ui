@@ -15,6 +15,7 @@
 	import IconMoon from "$lib/components/icons/IconMoon.svelte";
 	import { switchTheme, subscribeToTheme } from "$lib/switchTheme";
 	import { isAborted } from "$lib/stores/isAborted";
+	import { isOnline } from "$lib/stores/isOnline.svelte";
 	import { onDestroy } from "svelte";
 
 	import NavConversationItem from "./NavConversationItem.svelte";
@@ -57,7 +58,7 @@
 	function handleNewChatClick(e: MouseEvent) {
 		isAborted.set(true);
 
-		if (requireAuthUser()) {
+		if (requireAuthUser() || !$isOnline) {
 			e.preventDefault();
 		}
 	}
@@ -143,7 +144,9 @@
 		href={`${base}/`}
 		onclick={handleNewChatClick}
 		class="flex rounded-lg border bg-white px-2 py-0.5 text-center shadow-xs hover:shadow-none sm:text-smd dark:border-gray-600 dark:bg-gray-700"
-		title="Ctrl/Cmd + Shift + O"
+		class:opacity-50={!$isOnline}
+		class:cursor-not-allowed={!$isOnline}
+		title={!$isOnline ? "You are offline" : "Ctrl/Cmd + Shift + O"}
 	>
 		New Chat
 	</a>

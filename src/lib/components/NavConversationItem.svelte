@@ -12,6 +12,7 @@
 	import EditConversationModal from "$lib/components/EditConversationModal.svelte";
 	import DeleteConversationModal from "$lib/components/DeleteConversationModal.svelte";
 	import { requireAuthUser } from "$lib/utils/auth";
+	import { isOnline } from "$lib/stores/isOnline.svelte";
 
 	interface Props {
 		conv: ConvSidebar;
@@ -31,7 +32,7 @@
 	let inputEl: HTMLInputElement | undefined = $state();
 
 	async function startInlineEdit() {
-		if (readOnly || requireAuthUser()) return;
+		if (readOnly || requireAuthUser() || !$isOnline) return;
 		inlineTitle = conv.title;
 		inlineCancelled = false;
 		inlineEditing = true;
@@ -57,7 +58,7 @@
 
 <div
 	class="group flex h-8 flex-none items-center gap-1.5 rounded-lg pr-1.5 pl-2 text-base text-gray-600 hover:bg-gray-100 max-sm:h-10 sm:text-sm dark:text-gray-300 dark:hover:bg-gray-700
-		{conv.id === page.params.id ? 'bg-gray-100 dark:bg-gray-700' : ''}"
+        {conv.id === page.params.id ? 'bg-gray-100 dark:bg-gray-700' : ''}"
 >
 	{#if inlineEditing}
 		<input
@@ -97,7 +98,7 @@
 			<DropdownMenu.Root
 				bind:open={isMenuOpen}
 				onOpenChange={(open) => {
-					if (open && requireAuthUser()) {
+					if (open && (requireAuthUser() || !$isOnline)) {
 						isMenuOpen = false;
 						return;
 					}
@@ -107,7 +108,7 @@
 				<DropdownMenu.Trigger
 					class="flex h-6 w-6 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 data-[state=open]:bg-gray-200 data-[state=open]:text-gray-600 md:hidden md:group-hover:flex md:data-[state=open]:flex dark:hover:bg-gray-600 dark:hover:text-gray-200 dark:data-[state=open]:bg-gray-600 dark:data-[state=open]:text-gray-200"
 					aria-label="Conversation actions"
-					title="More options"
+					title={!$isOnline ? "You are offline" : "More options"}
 				>
 					<LucideEllipsis class="text-sm" />
 				</DropdownMenu.Trigger>

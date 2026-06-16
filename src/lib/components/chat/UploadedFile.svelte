@@ -24,6 +24,16 @@
 	// Capture URL once at component creation to prevent reactive updates during navigation
 	let urlNotTrailing = page.url.pathname.replace(/\/$/, "");
 
+	// Cache-on-view: fetch attachment to prime the service worker cache when the component mounts
+	$effect(() => {
+		if (file.type === "hash") {
+			const url = urlNotTrailing + "/output/" + file.value;
+			fetch(url).catch(() => {
+				// Non-critical: caching is best-effort
+			});
+		}
+	});
+
 	function truncateMiddle(text: string, maxLength: number): string {
 		if (text.length <= maxLength) {
 			return text;
