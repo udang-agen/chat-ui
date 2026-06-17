@@ -186,6 +186,7 @@
 
 		// Global keyboard shortcut: New Chat (Ctrl/Cmd + Shift + O)
 		const onKeydown = (e: KeyboardEvent) => {
+			// Ignore when a modal has focus (app is inert)
 			const appEl = document.getElementById("app");
 			if (appEl?.hasAttribute("inert")) return;
 
@@ -220,11 +221,14 @@
 			: convsStore.list.find((conv) => conv.id === page.params.id)?.title
 	);
 
+	// Show the welcome modal once on first app load
 	let showWelcome = $derived(
 		!$settings.welcomeModalSeen &&
 			!(page.data.shared === true && page.route.id?.startsWith("/conversation/"))
 	);
 
+	// Shared conversation views define their own social preview tags
+	// (see SharePreviewTags.svelte), so skip the generic ones there
 	let isSharedConversationView = $derived(
 		page.route.id === "/r/[id]" ||
 			(page.route.id === "/conversation/[id]" && page.params.id?.length === 7)
@@ -236,6 +240,8 @@
 	<meta name="description" content={publicConfig.PUBLIC_APP_DESCRIPTION} />
 	<meta name="twitter:site" content="@huggingface" />
 
+	<!-- use those meta tags everywhere except on special listing pages -->
+	<!-- feel free to refacto if there's a better way -->
 	{#if !page.url.pathname.includes("/models/") && !isSharedConversationView}
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="{publicConfig.PUBLIC_APP_NAME} - Chat with AI models" />
